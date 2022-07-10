@@ -48,6 +48,10 @@ def save_csv_multi(save_path, save_file_name, save_data):
         writer.writerow(save_data[i])
         file.close()
 
+b = 0.7
+a = b < 0.5
+c = 2*a + 7*(1-a)
+print(a,b,c)
 
 
 
