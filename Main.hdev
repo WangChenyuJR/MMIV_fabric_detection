@@ -1,0 +1,797 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="20.11.2.0">
+<procedure name="main">
+<interface/>
+<body>
+<l>*read_image(Image_obj, 'E:/LIC/CV_detection/faster_rcnn/fabric-defect/fabric-annoted/JPEGImages/000001.jpg')</l>
+<c>*获取图像尺寸</c>
+<l>*read_image(Image_obj, 'E:/MMIV_C#/001.jpg')</l>
+<l>read_image(Image_obj, 'E:/MMIV_C#/Data/Log2.bmp')</l>
+<l>get_image_size(Image_obj, Width_obj, Height_obj)</l>
+<l>cal_common_divisor (Width_obj, Height_obj, common_divisor)</l>
+<c>		 </c>
+<l>*sub_height := common_divisor</l>
+<l>*sub_width := common_divisor</l>
+<c></c>
+<l>sub_height := 100</l>
+<l>sub_width := 100</l>
+<l>pixel_size := Width_obj*Height_obj</l>
+<l>row := Height_obj / sub_height</l>
+<l>col := Width_obj / sub_width</l>
+<c>*子图初始数量</c>
+<l>subimg_num := int(row*col)</l>
+<l>iterations :=0</l>
+<l>iters := 200</l>
+<l>epsilon := 3</l>
+<l>threshold := 2</l>
+<l>ExteriorPointRate := 0.2</l>
+<l>GrayMaxVal := 0</l>
+<l>ContrastMaxVal_4 := 0</l>
+<l>ContrastMaxVal_8 := 0</l>
+<c></c>
+<l>count_seconds(S1)</l>
+<l>*cut_subimages_calculate_mm (Image_obj, Height_obj, sub_height, Width_obj, sub_width, ContrastMaxVal_4, ContrastMaxVal_8, GrayMaxVal, iterations, ContrastMax_4Out, ContrastMax_8Out, GrayMaxOut, GrayMeanValueList, ContrastMeanValueList_4, ContrastMeanValueList_8)</l>
+<l>count_seconds(S2)</l>
+<l>Time:=S2-S1</l>
+<c></c>
+<l>count_seconds(S3)</l>
+<l>cut_subimages_calculate_mm1 (Image_obj, Height_obj, Width_obj, sub_height, sub_width, GrayMaxVal, iterations, GrayMaxOut, GrayMeanValueList)</l>
+<l>count_seconds(S4)</l>
+<l>Time_gray_cal:=S4-S3</l>
+<c>*************ransac_threshold_slope0***********</c>
+<l>count_seconds(S5)</l>
+<l>zero_sloped_ransac (GrayMeanValueList, subimg_num, GrayMaxOut, iters, epsilon, threshold, GrayMeanStandardVarianceList, SSM_threshold_gray)</l>
+<l>*zero_sloped_ransac (ContrastMeanValueList_4, subimg_num, ContrastMax_4Out, iters, epsilon, threshold, ConsMeanStandardVarianceList_4, SSM_threshold_cons4)</l>
+<l>*zero_sloped_ransac (ContrastMeanValueList_8, subimg_num, ContrastMax_8Out, iters, epsilon, threshold, ConsMeanStandardVarianceList_8, SSM_threshold_cons8)</l>
+<l>count_seconds(S6)</l>
+<l>Time_zsransac_gray:=S6-S5</l>
+<c></c>
+<c>***************SSM_Model**************************</c>
+<l>cal_SSM (GrayMeanStandardVarianceList, SSM_threshold_gray, Gray_single_exterior_point)</l>
+<l>count_seconds(S11)</l>
+<l>Time_SSM:=S11-S6</l>
+<c>**************Score_Matrix************************</c>
+<l>create_score_matrix (subimg_num, GrayMeanStandardVarianceList, GrayMeanScoreMatrix)</l>
+<l>*create_score_matrix (subimg_num, ConsMeanStandardVarianceList_4, Cons4MeanScoreMatrix)</l>
+<l>*create_score_matrix (subimg_num, ConsMeanStandardVarianceList_8, Cons8MeanScoreMatrix)</l>
+<l>count_seconds(S7)</l>
+<l>Time_score_gray:=S7-S6</l>
+<c>**************BORDA_Count*************************</c>
+<l>borda_count (subimg_num, GrayMeanScoreMatrix, ExteriorPointRate, GrayBordaScoreList, GrayBordaMaxNumIndex)</l>
+<l>* borda_count (subimg_num, Cons4MeanScoreMatrix, ExteriorPointRate, ConsBordaScoreList_4, MaxNumIndexSorted1)</l>
+<l>* borda_count (subimg_num, Cons8MeanScoreMatrix, ExteriorPointRate, ConsBordaScoreList_8, MaxNumIndexSorted2)</l>
+<l>count_seconds(S8)</l>
+<l>Time_borda_gray:=S8-S7</l>
+<c>**************COPELAND_Count************************</c>
+<l>copeland_count (subimg_num, GrayMeanScoreMatrix, ExteriorPointRate, GrayCopelandScoreList, GrayCopelandMaxNumIndex)</l>
+<l>* copeland_count (subimg_num, Cons4MeanScoreMatrix, ExteriorPointRate, Cons4CopelandScoreList, MaxNumIndexSorted3)</l>
+<l>* copeland_count (subimg_num, Cons8MeanScoreMatrix, ExteriorPointRate, Cons8CopelandScoreList, MaxNumIndexSorted4)</l>
+<l>count_seconds(S9)</l>
+<l>Time_cope_gray:=S9-S8</l>
+<c>***************MAXIMIN_Count*************************</c>
+<l>maximin_count (subimg_num, GrayMeanScoreMatrix, ExteriorPointRate, GrayMaximinScoreList, GrayMaximinMaxNumIndex)</l>
+<l>* maximin_count (subimg_num, Cons4MeanScoreMatrix, ExteriorPointRate, Cons4MaxScoreList, MaxNumIndexSorted5)</l>
+<l>* maximin_count (subimg_num, Cons8MeanScoreMatrix, ExteriorPointRate, Cons8MaxScoreList, MaxNumIndexSorted6)</l>
+<l>count_seconds(S10)</l>
+<l>Time_max_gray:=S10-S9</l>
+<l>Time_total:=S10-S3</l>
+<c></c>
+<c></c>
+<l>tuple_length (Gray_single_exterior_point, RecNum)</l>
+<l>for index1:=0 to RecNum-1 by 1</l>
+<l>    draw_contour_MMIV1 (Contour, Gray_single_exterior_point, index1, col, sub_width, sub_height)</l>
+<l>endfor</l>
+<c></c>
+<l>*draw_contour_MMIV (Contour, GrayBordaMaxNumIndex, col, sub_width, sub_height)</l>
+<l>*draw_contour_MMIV (Contour, GrayCopelandMaxNumIndex, col, sub_width, sub_height)</l>
+<l>*draw_contour_MMIV (Contour, GrayMaximinMaxNumIndex, col, sub_width, sub_height)</l>
+<l>*draw_contour_MMIV (Contour, Gray_single_exterior_point, col, sub_width, sub_height)</l>
+<c></c>
+<c></c>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="cal_imgcrop_gray_mean">
+<interface>
+<io>
+<par name="ImageObj_cropped" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="gray_max_val" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Gray_Mean" base_type="ctrl" dimension="0"/>
+<par name="gray_max_valOut" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>gray_max_valOut := gray_max_val</l>
+<l>        intensity(ImageObj_cropped, ImageObj_cropped, Gray_Mean, Deviation)</l>
+<l>        if (Gray_Mean &gt; gray_max_valOut)</l>
+<l>            gray_max_valOut := Gray_Mean</l>
+<l>        endif</l>
+<l>return ()</l>
+</body>
+<docu id="cal_imgcrop_gray_mean">
+<parameters>
+<parameter id="Gray_Mean"/>
+<parameter id="ImageObj_cropped"/>
+<parameter id="gray_max_val"/>
+<parameter id="gray_max_valOut"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="power">
+<interface>
+<ic>
+<par name="aa" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="bb" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>bb := aa * aa</l>
+<l>return ()</l>
+</body>
+<docu id="power">
+<parameters>
+<parameter id="aa"/>
+<parameter id="bb"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="ContrastMean_4_8">
+<interface>
+<io>
+<par name="GrayImage_cropped" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="sub_height" base_type="ctrl" dimension="0"/>
+<par name="sub_width" base_type="ctrl" dimension="0"/>
+<par name="ContrastMax_4" base_type="ctrl" dimension="0"/>
+<par name="ContrastMax_8" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="ContrastMatrix_4" base_type="ctrl" dimension="0"/>
+<par name="ContrastMatrix_8" base_type="ctrl" dimension="0"/>
+<par name="contrastMax_4Out" base_type="ctrl" dimension="0"/>
+<par name="contrastMax_8Out" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>        contrastMax_4Out := ContrastMax_4</l>
+<l>        contrastMax_8Out := ContrastMax_8</l>
+<l>        Pixel_diff_4 := 0.0</l>
+<l>        Pixel_diff_8 := 0.0</l>
+<l>        for k := 1 to sub_height-1 by 1</l>
+<l>            for m := 1 to sub_width-1 by 1</l>
+<l>                if (k-1==0 or k+1==sub_height or m-1==0 or m+1==sub_width)</l>
+<l>                    continue</l>
+<l>                endif</l>
+<l>                get_grayval(GrayImage_cropped, k, m, Grayval_center)</l>
+<l>                get_grayval(GrayImage_cropped, k, m-1, Grayval_up)</l>
+<l>                get_grayval(GrayImage_cropped, k, m+1, Grayval_down)</l>
+<l>                get_grayval(GrayImage_cropped, k-1, m, Grayval_left)</l>
+<l>                get_grayval(GrayImage_cropped, k+1, m, Grayval_right)</l>
+<l>                get_grayval(GrayImage_cropped, k-1, m-1, Grayval_upleft)</l>
+<l>                get_grayval(GrayImage_cropped, k-1, m+1, Grayval_upright)</l>
+<l>                get_grayval(GrayImage_cropped, k+1, m-1, Grayval_downleft)</l>
+<l>                get_grayval(GrayImage_cropped, k+1, m+1, Grayval_downright)</l>
+<l>                power(Grayval_center - Grayval_up, Diff_up)</l>
+<l>                power(Grayval_center - Grayval_down, Diff_down)</l>
+<l>                power(Grayval_center - Grayval_left, Diff_left)</l>
+<l>                power(Grayval_center - Grayval_right, Diff_right)</l>
+<l>                power(Grayval_center - Grayval_upleft, Diff_upleft)</l>
+<l>                power(Grayval_center - Grayval_upright, Diff_upright)</l>
+<l>                power(Grayval_center - Grayval_downleft, Diff_downleft)</l>
+<l>                power(Grayval_center - Grayval_downright, Diff_downright)</l>
+<c>                </c>
+<l>                Pixel_diff_4 := Pixel_diff_4 + Diff_up + Diff_down + Diff_right + Diff_left</l>
+<l>                Pixel_diff_8 := Pixel_diff_8 + Diff_up + Diff_down + Diff_right + Diff_left + Diff_up + Diff_down + Diff_right + Diff_left</l>
+<l>            endfor</l>
+<l>        endfor</l>
+<l>        SquareNum_4 := 4*(sub_height - 2)*(sub_width - 2) + 3*(2*(sub_height - 2) + 2*(sub_width - 2)) + 2*4</l>
+<l>        SquareNum_8 := 8*(sub_height - 2)*(sub_width - 2) + 5*(2*(sub_height - 2) + 2*(sub_width - 2)) + 3*4</l>
+<l>        ContrastMatrix_4 := Pixel_diff_4 / SquareNum_4</l>
+<l>        ContrastMatrix_8 := Pixel_diff_8 / SquareNum_8</l>
+<c>        *更新每次出现的最大值</c>
+<l>        if (ContrastMatrix_4 &gt; contrastMax_4Out)</l>
+<l>            contrastMax_4Out := ContrastMatrix_4</l>
+<l>        endif</l>
+<l>        if (ContrastMatrix_8 &gt; contrastMax_8Out)</l>
+<l>            contrastMax_8Out := ContrastMatrix_8</l>
+<l>        endif</l>
+<l>return ()</l>
+</body>
+<docu id="ContrastMean_4_8">
+<parameters>
+<parameter id="ContrastMatrix_4"/>
+<parameter id="ContrastMatrix_8"/>
+<parameter id="ContrastMax_4"/>
+<parameter id="ContrastMax_8"/>
+<parameter id="GrayImage_cropped"/>
+<parameter id="contrastMax_4Out"/>
+<parameter id="contrastMax_8Out"/>
+<parameter id="sub_height"/>
+<parameter id="sub_width"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="zero_sloped_ransac">
+<interface>
+<ic>
+<par name="MeanValList" base_type="ctrl" dimension="0"/>
+<par name="subimg_num" base_type="ctrl" dimension="0"/>
+<par name="MaxVal" base_type="ctrl" dimension="0"/>
+<par name="iters" base_type="ctrl" dimension="0"/>
+<par name="epsilon" base_type="ctrl" dimension="0"/>
+<par name="threshold" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="StandardVarianceList" base_type="ctrl" dimension="0"/>
+<par name="SSM_threshold" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>for index1 := 0 to subimg_num-1 by 1</l>
+<l>    PregivenLine[index1]:=MaxVal/2</l>
+<l>endfor</l>
+<l>BestStdVal := MaxVal</l>
+<l>PreTotal := 0</l>
+<l>for index2 := 0 to iters-1 by 1</l>
+<l>    Sample1 := round(rand(1)*(subimg_num-1))</l>
+<c>    *生成两个不同的随机数，范围在子图数量内（作为下标）</c>
+<l>    repeat</l>
+<l>        Sample2 := round(rand(1)*(subimg_num-1))</l>
+<l>    until (Sample1 != Sample2)</l>
+<c>    </c>
+<c>    *预给定的值</c>
+<l>    PreVal1 :=PregivenLine[Sample1]</l>
+<l>    PreVal2 :=PregivenLine[Sample2]</l>
+<c>    *实际值</c>
+<l>    RealVal1 := MeanValList[Sample1]</l>
+<l>    RealVal2 := MeanValList[Sample2]</l>
+<c>    </c>
+<l>    Slope := 0</l>
+<l>    StdVal := RealVal1 - Slope*PreVal1</l>
+<c>    </c>
+<c>    *内点计数器</c>
+<l>    TotalIn :=0</l>
+<l>    for Index := 0 to subimg_num-1 by 1</l>
+<l>        Y_estimate := Slope*PregivenLine[Index] + StdVal</l>
+<l>        ind := MeanValList[Index]</l>
+<c>        *符合内点条件</c>
+<l>        if(abs(Y_estimate - ind) &lt; epsilon)</l>
+<l>            TotalIn := TotalIn+1</l>
+<l>        endif</l>
+<c>        </c>
+<c>        *记录最大内点数与对应的参数</c>
+<l>        if(TotalIn &gt; PreTotal)</l>
+<l>            PreTotal := TotalIn</l>
+<l>            BestStdVal := StdVal</l>
+<l>        endif</l>
+<c>        </c>
+<c>        *内点数大于设定的阈值，跳出循环</c>
+<l>        if(TotalIn &gt; subimg_num*threshold)</l>
+<l>            break</l>
+<l>        endif</l>
+<l>    endfor</l>
+<l>endfor</l>
+<l>StandardVarianceSum :=0</l>
+<l>for index3 := 0 to subimg_num-1 by 1</l>
+<l>    ceta := MeanValList[index3]</l>
+<l>    StandardVarianceList[index3] := abs((ceta - BestStdVal)/subimg_num)</l>
+<l>    StandardVarianceSum := StandardVarianceSum + (ceta - BestStdVal)</l>
+<l>    power(StandardVarianceSum / subimg_num, SSM_threshold)</l>
+<l>endfor</l>
+<l>return ()</l>
+</body>
+<docu id="zero_sloped_ransac">
+<parameters>
+<parameter id="MaxVal"/>
+<parameter id="MeanValList"/>
+<parameter id="SSM_threshold"/>
+<parameter id="StandardVarianceList"/>
+<parameter id="epsilon"/>
+<parameter id="iters"/>
+<parameter id="subimg_num"/>
+<parameter id="threshold"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="create_score_matrix">
+<interface>
+<ic>
+<par name="ListLength" base_type="ctrl" dimension="0"/>
+<par name="StdList" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="ScoreMatrix" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>create_matrix(ListLength, ListLength, 0, ScoreMatrix)</l>
+<l>for index1 := 0 to ListLength-1 by 1</l>
+<l>    for index2 := 0 to ListLength-1 by 1</l>
+<l>        set_value_matrix(ScoreMatrix, index1, index2, StdList[index1]-StdList[index2])</l>
+<l>    endfor</l>
+<l>endfor</l>
+<l>return ()</l>
+</body>
+<docu id="create_score_matrix">
+<parameters>
+<parameter id="ListLength"/>
+<parameter id="ScoreMatrix"/>
+<parameter id="StdList"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="borda_count">
+<interface>
+<ic>
+<par name="subimg_num" base_type="ctrl" dimension="0"/>
+<par name="ScoreMatrix" base_type="ctrl" dimension="0"/>
+<par name="ExteriorPointRate" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="BordaScoreList" base_type="ctrl" dimension="0"/>
+<par name="MaxNumIndexSorted" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<c>*计算borda算法下每个子图的得分</c>
+<l>for index1 :=0 to subimg_num-1 by 1</l>
+<l>    Sum := 0</l>
+<l>    for index2 :=0 to subimg_num-1 by 1</l>
+<l>        get_value_matrix(ScoreMatrix, index1, index2, TempSum)</l>
+<l>        Sum:=Sum+TempSum</l>
+<l>    endfor</l>
+<l>    BordaScoreList[index1]:=Sum</l>
+<l>endfor</l>
+<c></c>
+<c>*要取的最大值的数量</c>
+<l>MaxNum := int(ExteriorPointRate*subimg_num)</l>
+<c></c>
+<c>*如果num=0就不需要进行计算，直接输出空值</c>
+<l>if(MaxNum &gt; 0)</l>
+<c>    *先将得分列表里的前MaxNum个值直接看做整个得分列表的最大值并保存</c>
+<l>    for index3:=0 to MaxNum-1 by 1</l>
+<c>        *最大值的下标列表</c>
+<l>        MaxNumIndex[index3]:=index3</l>
+<c>        *最大值的值列表</c>
+<l>        MaxNumVal[index3]:=BordaScoreList[index3]</l>
+<l>    endfor</l>
+<c>    </c>
+<c>    *从第MaxNum开始，找比现在列表里更大的值进行替换</c>
+<l>    for index4:=MaxNum to subimg_num-1 by 1</l>
+<l>        tuple_min(MaxNumVal, TempMinVal)</l>
+<l>        for index5:=0 to MaxNum-1 by 1</l>
+<l>            if(TempMinVal==MaxNumVal[index5])</l>
+<l>                TempMinIndex:=index5</l>
+<l>                break</l>
+<l>            endif</l>
+<l>        endfor</l>
+<l>        if(BordaScoreList[index4] &gt; MaxNumVal[TempMinIndex])</l>
+<l>            MaxNumVal[TempMinIndex]:=BordaScoreList[index4]</l>
+<l>            MaxNumIndex[TempMinIndex]:=index4</l>
+<l>        endif</l>
+<l>    endfor</l>
+<l>elseif(MaxNum == 0)</l>
+<l>    MaxNumIndex:=[]</l>
+<l>endif</l>
+<l>tuple_sort(MaxNumIndex, MaxNumIndexSorted)</l>
+<l>return ()</l>
+</body>
+<docu id="borda_count">
+<parameters>
+<parameter id="BordaScoreList"/>
+<parameter id="ExteriorPointRate"/>
+<parameter id="MaxNumIndexSorted"/>
+<parameter id="ScoreMatrix"/>
+<parameter id="subimg_num"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="copeland_count">
+<interface>
+<ic>
+<par name="subimg_num" base_type="ctrl" dimension="0"/>
+<par name="ScoreMatrix" base_type="ctrl" dimension="0"/>
+<par name="ExteriorPointRate" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="CopelandScoreList" base_type="ctrl" dimension="0"/>
+<par name="MaxNumIndexSorted" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<c>*计算copeland算法下每个子图的得分</c>
+<l>for index1 :=0 to subimg_num-1 by 1</l>
+<l>    Sum := 0</l>
+<l>    for index2 :=0 to subimg_num-1 by 1</l>
+<l>        get_value_matrix(ScoreMatrix, index1, index2, TempSum)</l>
+<l>        if(TempSum &gt; 0)</l>
+<l>            Sum:=Sum+1</l>
+<l>        elseif(TempSum == 0)</l>
+<l>            Sum:=Sum+0</l>
+<l>        elseif(TempSum &lt; 0)</l>
+<l>            Sum:=Sum-1</l>
+<l>        endif</l>
+<l>    endfor</l>
+<l>    CopelandScoreList[index1]:=Sum</l>
+<l>endfor</l>
+<c></c>
+<c>*要取的最大值的数量</c>
+<l>MaxNum := int(ExteriorPointRate*subimg_num)</l>
+<c></c>
+<c>*如果num=0就不需要进行计算，直接输出空值</c>
+<l>if(MaxNum &gt; 0)</l>
+<c>    *先将得分列表里的前MaxNum个值直接看做整个得分列表的最大值并保存</c>
+<l>    for index3:=0 to MaxNum-1 by 1</l>
+<c>        *最大值的下标列表</c>
+<l>        MaxNumIndex[index3]:=index3</l>
+<c>        *最大值的值列表</c>
+<l>        MaxNumVal[index3]:=CopelandScoreList[index3]</l>
+<l>    endfor</l>
+<c>    </c>
+<c>    *从第MaxNum开始，找比现在列表里更大的值进行替换</c>
+<l>    for index4:=MaxNum to subimg_num-1 by 1</l>
+<l>        tuple_min(MaxNumVal, TempMinVal)</l>
+<l>        for index5:=0 to MaxNum-1 by 1</l>
+<l>            if(TempMinVal==MaxNumVal[index5])</l>
+<l>                TempMinIndex:=index5</l>
+<l>                break</l>
+<l>            endif</l>
+<l>        endfor</l>
+<l>        if(CopelandScoreList[index4] &gt; MaxNumVal[TempMinIndex])</l>
+<l>            MaxNumVal[TempMinIndex]:=CopelandScoreList[index4]</l>
+<l>            MaxNumIndex[TempMinIndex]:=index4</l>
+<l>        endif</l>
+<l>    endfor</l>
+<l>elseif(MaxNum == 0)</l>
+<l>    MaxNumIndex:=[]</l>
+<l>endif</l>
+<l>tuple_sort(MaxNumIndex, MaxNumIndexSorted)</l>
+<l>return ()</l>
+</body>
+<docu id="copeland_count">
+<parameters>
+<parameter id="CopelandScoreList"/>
+<parameter id="ExteriorPointRate"/>
+<parameter id="MaxNumIndexSorted"/>
+<parameter id="ScoreMatrix"/>
+<parameter id="subimg_num"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="maximin_count">
+<interface>
+<ic>
+<par name="subimg_num" base_type="ctrl" dimension="0"/>
+<par name="ScoreMatrix" base_type="ctrl" dimension="0"/>
+<par name="ExteriorPointRate" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="MaxScoreList" base_type="ctrl" dimension="0"/>
+<par name="MaxNumIndexSorted" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<c>*计算maximin算法下每个子图的得分</c>
+<l>for Index:=0 to subimg_num-1 by 1</l>
+<l>    ScoreIndex[Index]:=0</l>
+<l>endfor</l>
+<l>for index1 :=0 to subimg_num-1 by 1</l>
+<l>    Sum := 0</l>
+<l>    for index2 :=0 to subimg_num-1 by 1</l>
+<l>        get_value_matrix(ScoreMatrix, index1, index2, TempSum)</l>
+<l>        ScoreIndex[index2]:=TempSum</l>
+<l>    endfor</l>
+<l>    tuple_max(ScoreIndex, MaxTemp)</l>
+<l>    MaxScoreList[index1]:=MaxTemp</l>
+<l>endfor</l>
+<c></c>
+<c>*要取的最大值的数量</c>
+<l>MaxNum := int(ExteriorPointRate*subimg_num)</l>
+<c></c>
+<c>*如果num=0就不需要进行计算，直接输出空值</c>
+<l>if(MaxNum &gt; 0)</l>
+<c>    *先将得分列表里的前MaxNum个值直接看做整个得分列表的最大值并保存</c>
+<l>    for index3:=0 to MaxNum-1 by 1</l>
+<c>        *最大值的下标列表</c>
+<l>        MaxNumIndex[index3]:=index3</l>
+<c>        *最大值的值列表</c>
+<l>        MaxNumVal[index3]:=MaxScoreList[index3]</l>
+<l>    endfor</l>
+<c>    </c>
+<c>    *从第MaxNum开始，找比现在列表里更大的值进行替换</c>
+<l>    for index4:=MaxNum to subimg_num-1 by 1</l>
+<l>        tuple_min(MaxNumVal, TempMinVal)</l>
+<l>        for index5:=0 to MaxNum-1 by 1</l>
+<l>            if(TempMinVal==MaxNumVal[index5])</l>
+<l>                TempMinIndex:=index5</l>
+<l>                break</l>
+<l>            endif</l>
+<l>        endfor</l>
+<l>        if(MaxScoreList[index4] &gt; MaxNumVal[TempMinIndex])</l>
+<l>            MaxNumVal[TempMinIndex]:=MaxScoreList[index4]</l>
+<l>            MaxNumIndex[TempMinIndex]:=index4</l>
+<l>        endif</l>
+<l>    endfor</l>
+<l>elseif(MaxNum == 0)</l>
+<l>    MaxNumIndex:=[]</l>
+<l>endif</l>
+<l>tuple_sort(MaxNumIndex, MaxNumIndexSorted)</l>
+<l>return ()</l>
+</body>
+<docu id="maximin_count">
+<parameters>
+<parameter id="ExteriorPointRate"/>
+<parameter id="MaxNumIndexSorted"/>
+<parameter id="MaxScoreList"/>
+<parameter id="ScoreMatrix"/>
+<parameter id="subimg_num"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="cut_subimages_calculate_mm">
+<interface>
+<io>
+<par name="Image_obj" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="Height_obj" base_type="ctrl" dimension="0"/>
+<par name="sub_height" base_type="ctrl" dimension="0"/>
+<par name="Width_obj" base_type="ctrl" dimension="0"/>
+<par name="sub_width" base_type="ctrl" dimension="0"/>
+<par name="ContrastMaxVal_4" base_type="ctrl" dimension="0"/>
+<par name="ContrastMaxVal_8" base_type="ctrl" dimension="0"/>
+<par name="GrayMaxVal" base_type="ctrl" dimension="0"/>
+<par name="iterations" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="ContrastMax_4Out" base_type="ctrl" dimension="0"/>
+<par name="ContrastMax_8Out" base_type="ctrl" dimension="0"/>
+<par name="GrayMaxOut" base_type="ctrl" dimension="0"/>
+<par name="GrayMeanValueList" base_type="ctrl" dimension="0"/>
+<par name="ContrastMeanValueList_4" base_type="ctrl" dimension="0"/>
+<par name="ContrastMeanValueList_8" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>iterationsOut := iterations</l>
+<l>for i := 0 to Height_obj-sub_height by sub_height</l>
+<l>    for j := 0 to Width_obj-sub_width by sub_width</l>
+<c>        *将原图像裁剪成子图</c>
+<l>        crop_part(Image_obj, ImageObj_cropped, i, j, sub_width, sub_height)</l>
+<l>        *get_domain(ImageObj_cropped, Domain)</l>
+<l>        *boundary(Domain, RegionBorder, 'outer')</l>
+<l>        rgb1_to_gray(ImageObj_cropped, GrayImage_cropped)</l>
+<c>        </c>
+<c>        *计算4邻近和8邻近对比度平均值的自定义算子</c>
+<l>        ContrastMean_4_8 (GrayImage_cropped, sub_height, sub_width, ContrastMaxVal_4, ContrastMaxVal_8, ContrastMatrix_4, ContrastMatrix_8, ContrastMax_4Out, ContrastMax_8Out)</l>
+<c>        </c>
+<c>        *计算饱和度</c>
+<l>        *decompose3(ImageObj_cropped, ImageRed, ImageGreen, ImageBlue)</l>
+<l>        *trans_from_rgb(ImageRed, ImageGreen, ImageBlue, ImageHue, ImageSaturation, ImageValue, 'hsv')</l>
+<c></c>
+<l>        cal_imgcrop_gray_mean (ImageObj_cropped, GrayMaxVal, Gray_Mean, GrayMaxOut)</l>
+<l>        GrayMeanValueList[iterationsOut] := Gray_Mean</l>
+<l>        ContrastMeanValueList_4[iterationsOut] := ContrastMatrix_4</l>
+<l>        ContrastMeanValueList_8[iterationsOut] := ContrastMatrix_8</l>
+<c>        </c>
+<l>        iterationsOut := iterationsOut+1</l>
+<l>    endfor</l>
+<l>endfor</l>
+<l>return ()</l>
+</body>
+<docu id="cut_subimages_calculate_mm">
+<parameters>
+<parameter id="ContrastMaxVal_4"/>
+<parameter id="ContrastMaxVal_8"/>
+<parameter id="ContrastMax_4Out"/>
+<parameter id="ContrastMax_8Out"/>
+<parameter id="ContrastMeanValueList_4"/>
+<parameter id="ContrastMeanValueList_8"/>
+<parameter id="GrayMaxOut"/>
+<parameter id="GrayMaxVal"/>
+<parameter id="GrayMeanValueList"/>
+<parameter id="Height_obj"/>
+<parameter id="Image_obj"/>
+<parameter id="Width_obj"/>
+<parameter id="iterations"/>
+<parameter id="sub_height"/>
+<parameter id="sub_width"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="cut_subimages_calculate_mm1">
+<interface>
+<io>
+<par name="Image_obj" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="Height_obj" base_type="ctrl" dimension="0"/>
+<par name="Width_obj" base_type="ctrl" dimension="0"/>
+<par name="sub_height" base_type="ctrl" dimension="0"/>
+<par name="sub_width" base_type="ctrl" dimension="0"/>
+<par name="GrayMaxVal" base_type="ctrl" dimension="0"/>
+<par name="iterations" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="GrayMaxOut" base_type="ctrl" dimension="0"/>
+<par name="GrayMeanValueList" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>iterationsOut := iterations</l>
+<l>for i := 0 to Height_obj-sub_height by sub_height</l>
+<l>    for j := 0 to Width_obj-sub_width by sub_width</l>
+<c>        *将原图像裁剪成子图</c>
+<l>        crop_part(Image_obj, ImageObj_cropped, i, j, sub_width, sub_height)</l>
+<l>        cal_imgcrop_gray_mean (ImageObj_cropped, GrayMaxVal, Gray_Mean, GrayMaxOut)</l>
+<l>        GrayMeanValueList[iterationsOut] := Gray_Mean</l>
+<l>        iterationsOut := iterationsOut+1</l>
+<l>    endfor</l>
+<l>endfor</l>
+<l>return ()</l>
+</body>
+<docu id="cut_subimages_calculate_mm1">
+<parameters>
+<parameter id="GrayMaxOut"/>
+<parameter id="GrayMaxVal"/>
+<parameter id="GrayMeanValueList"/>
+<parameter id="Height_obj"/>
+<parameter id="Image_obj">
+<description lang="zh_CN">只有灰度值</description>
+</parameter>
+<parameter id="Width_obj"/>
+<parameter id="iterations"/>
+<parameter id="sub_height"/>
+<parameter id="sub_width"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="cal_common_divisor">
+<interface>
+<ic>
+<par name="input1" base_type="ctrl" dimension="0"/>
+<par name="input2" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="common_divisor" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>aOut := input1</l>
+<l>bOut := input2</l>
+<l>if (aOut &lt; bOut)</l>
+<l>i := bOut</l>
+<l>bOut := aOut</l>
+<l>aOut := i</l>
+<l>endif</l>
+<l>n := aOut % bOut</l>
+<l>while(n != 0)</l>
+<l>    aOut := bOut</l>
+<l>    bOut := n</l>
+<l>    n := aOut % bOut</l>
+<l>endwhile</l>
+<l>common_divisor := bOut</l>
+<l>return ()</l>
+</body>
+<docu id="cal_common_divisor">
+<parameters>
+<parameter id="common_divisor"/>
+<parameter id="input1">
+<default_type>integer</default_type>
+<description lang="zh_CN">计算两个输入值的最大公约数，input1和input2分别为两个被求数，common_divisor为计算结果的最大公约数.</description>
+<sem_type>number</sem_type>
+<type_list>
+<item>integer</item>
+</type_list>
+</parameter>
+<parameter id="input2"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="cal_SSM">
+<interface>
+<ic>
+<par name="SSM_StdList" base_type="ctrl" dimension="0"/>
+<par name="SSM_threshold" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="single_exterior_point" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>tuple_length(SSM_StdList, SSM_StdList_Length)</l>
+<c>*先生成一个全为-1的一维tuple</c>
+<l>tuple_gen_const(SSM_StdList_Length, -1, single_exterior_point)</l>
+<l>for index1:=0 to SSM_StdList_Length-1 by 1</l>
+<l>    if(SSM_StdList[index1] &gt; SSM_threshold)</l>
+<l>        single_exterior_point[index1]:=index1</l>
+<l>    endif</l>
+<l>endfor</l>
+<l>tuple_find(single_exterior_point, -1, Indices)</l>
+<l>tuple_remove(single_exterior_point, Indices, single_exterior_point)</l>
+<l>return ()</l>
+</body>
+<docu id="cal_SSM">
+<parameters>
+<parameter id="SSM_StdList"/>
+<parameter id="SSM_threshold"/>
+<parameter id="single_exterior_point"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="draw_contour_MMIV">
+<interface>
+<oo>
+<par name="Contour" base_type="iconic" dimension="0"/>
+</oo>
+<ic>
+<par name="MaxNumIndex" base_type="ctrl" dimension="0"/>
+<par name="col" base_type="ctrl" dimension="0"/>
+<par name="sub_width" base_type="ctrl" dimension="0"/>
+<par name="sub_height" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<l>tuple_length (MaxNumIndex, RecNum)</l>
+<l>for index1:=0 to RecNum-1 by 1</l>
+<l>    x_upleft := (MaxNumIndex[index1] % col)*sub_width</l>
+<l>    y_upleft := (MaxNumIndex[index1] / col)*sub_height</l>
+<l>    rows:=[y_upleft, y_upleft, y_upleft+sub_width, y_upleft+sub_width, y_upleft]</l>
+<l>    cols:=[x_upleft, x_upleft+sub_height, x_upleft+sub_height, x_upleft, x_upleft]</l>
+<l>    gen_contour_polygon_xld(Contour, rows, cols)</l>
+<l>endfor</l>
+<l>return ()</l>
+</body>
+<docu id="draw_contour_MMIV">
+<parameters>
+<parameter id="Contour"/>
+<parameter id="MaxNumIndex"/>
+<parameter id="col"/>
+<parameter id="sub_height"/>
+<parameter id="sub_width"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="draw_contour_MMIV1">
+<interface>
+<oo>
+<par name="Contour" base_type="iconic" dimension="0"/>
+</oo>
+<ic>
+<par name="GrayBordaMaxNumIndex" base_type="ctrl" dimension="0"/>
+<par name="index1" base_type="ctrl" dimension="0"/>
+<par name="col" base_type="ctrl" dimension="0"/>
+<par name="sub_width" base_type="ctrl" dimension="0"/>
+<par name="sub_height" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<l>    x_upleft := ( GrayBordaMaxNumIndex[index1] % col)*sub_width</l>
+<l>    y_upleft := ( GrayBordaMaxNumIndex[index1] / col)*sub_height</l>
+<l>    rows:=[y_upleft, y_upleft, y_upleft+sub_width, y_upleft+sub_width, y_upleft]</l>
+<l>    cols:=[x_upleft, x_upleft+sub_height, x_upleft+sub_height, x_upleft, x_upleft]</l>
+<l>    gen_contour_polygon_xld(Contour, rows, cols)</l>
+<l>return ()</l>
+</body>
+<docu id="draw_contour_MMIV1">
+<parameters>
+<parameter id="Contour"/>
+<parameter id="GrayBordaMaxNumIndex"/>
+<parameter id="col"/>
+<parameter id="index1"/>
+<parameter id="sub_height"/>
+<parameter id="sub_width"/>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>
